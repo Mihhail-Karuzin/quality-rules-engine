@@ -1,0 +1,26 @@
+
+# Installed dependencies
+node_modules/
+
+# Compiled JavaScript output
+dist/
+
+# Generated JSON reports
+*-report.json
+
+# Test coverage reports
+coverage/
+
+# Local environment variables
+.env
+.env.*
+!.env.example
+
+# Debug logs
+*.log
+
+# Editor and operating system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
