@@ -3,38 +3,54 @@ import type { QualityGateResult } from "./quality-gate-result.js";
 
 import { checkPassRate } from "./pass-rate.rule.js";
 import { checkCriticalFailures } from "./critical-failures.rule.js";
+import { checkMaximumFailedTests } from "./maximum-failed-tests.rule.js";
 import { calculatePassRate } from "./pass-rate.calculator.js";
 import { formatPassRate } from "./pass-rate.formatter.js";
 
 export function evaluateQualityGateDetailed(
-    result: TestResult,
-    minimumPassRate: number
+  result: TestResult,
+  minimumPassRate: number,
+  maximumFailedTests?: number,
 ): QualityGateResult {
-    const passRatePassed = checkPassRate(result, minimumPassRate);
+  const passRatePassed = checkPassRate(result, minimumPassRate);
 
-    const criticalFailuresPassed = checkCriticalFailures(result);
+  const criticalFailuresPassed = checkCriticalFailures(result);
 
-    const passed = passRatePassed && criticalFailuresPassed;
+  const maximumFailedTestsPassed =
+    maximumFailedTests === undefined ||
+    checkMaximumFailedTests(result, maximumFailedTests);
 
-    const actualPassRate = calculatePassRate(result);
+  const passed =
+    passRatePassed && criticalFailuresPassed && maximumFailedTestsPassed;
 
-    const reasons: string[] = [];
+  const actualPassRate = calculatePassRate(result);
 
-    if (!passRatePassed) {
-        const formattedPassRate = formatPassRate(actualPassRate);
+  const reasons: string[] = [];
 
-        reasons.push(`Pass rate ${formattedPassRate}% is below minimum ${minimumPassRate}%`);
-    }
+  if (!passRatePassed) {
+    const formattedPassRate = formatPassRate(actualPassRate);
 
-    if (!criticalFailuresPassed) {
-        reasons.push("Critical test failures detected");
-    }
+    reasons.push(
+      `Pass rate ${formattedPassRate}% is below minimum ${minimumPassRate}%`,
+    );
+  }
 
-    return {
-        passed,
-        passRatePassed,
-        criticalFailuresPassed,
-        actualPassRate,
-        reasons
-    };
+  if (!criticalFailuresPassed) {
+    reasons.push("Critical test failures detected");
+  }
+
+  if (!maximumFailedTestsPassed) {
+    reasons.push(
+      `Failed tests ${result.failed} exceed maximum allowed ${maximumFailedTests}`,
+    );
+  }
+
+  return {
+    passed,
+    passRatePassed,
+    criticalFailuresPassed,
+    ...(maximumFailedTests !== undefined && { maximumFailedTestsPassed }),
+    actualPassRate,
+    reasons,
+  };
 }
