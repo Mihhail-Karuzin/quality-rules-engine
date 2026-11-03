@@ -391,4 +391,24 @@ describe("Detailed Quality Gate", () => {
       "Failed tests 20 exceed maximum allowed 5",
     ]);
   });
+  it("should report pass rate and critical failures when maximum failed tests passes", () => {
+    const result = {
+      total: 100,
+      passed: 80,
+      failed: 20,
+      criticalFailed: 2,
+    };
+
+    const report = evaluateQualityGateDetailed(result, 90, 25);
+
+    expect(report.passed).toBe(false);
+    expect(report.passRatePassed).toBe(false);
+    expect(report.criticalFailuresPassed).toBe(false);
+    expect(report.maximumFailedTestsPassed).toBe(true);
+
+    expect(report.reasons).toEqual([
+      "Pass rate 80% is below minimum 90%",
+      "Critical test failures detected",
+    ]);
+  });
 });
